@@ -13,6 +13,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.io.File;
 
+import com.turan.streams.demo.ReportData;
+import com.turan.streams.demo.LogData;
+
 public class LogsReport {
 
     private LocalTime startTime;
@@ -60,10 +63,10 @@ public class LogsReport {
         Stream<String> lines = Files.lines(Paths.get(inputFileName));
 
         // Parse the stream of lines with filtering only correct data into a List
-        List<com.turan.streams.demo.LogData> logs = parse(lines);
+        List<LogData> logs = parse(lines);
 
         // Genarete the output data from the logs and store into a List
-        List<com.turan.streams.demo.ReportData> reportDataList = calculateLogs(logs);
+        List<ReportData> reportDataList = calculateLogs(logs);
 
         // Write the output data into a report
         FileWriter fw = new FileWriter(outputFileName);
@@ -74,15 +77,15 @@ public class LogsReport {
         lines.close();
     }
 
-    public List<com.turan.streams.demo.LogData> parse(Stream<String> lines) throws IOException {
-        List<com.turan.streams.demo.LogData> logs = lines.map(line -> line.split(" "))
-                                    .filter(com.turan.streams.demo.LogData::isLineValid)
-                                    .map(a -> new com.turan.streams.demo.LogData(LocalTime.parse(a[0]), a[1], a[2]))
+    public List<LogData> parse(Stream<String> lines) throws IOException {
+        List<LogData> logs = lines.map(line -> line.split(" "))
+                                    .filter(LogData::isLineValid)
+                                    .map(a -> new LogData(LocalTime.parse(a[0]), a[1], a[2]))
                                     .collect(Collectors.toList());
 
         //logs.forEach(x ->  System.out.println(x));
         //System.out.println("-----------------------");
-        logs.sort(Comparator.comparing(com.turan.streams.demo.LogData::getUser).thenComparing(com.turan.streams.demo.LogData::getLocalTime));
+        logs.sort(Comparator.comparing(LogData::getUser).thenComparing(LogData::getLocalTime));
         //logs.forEach(x ->  System.out.println(x));
         startTime = Collections.min(logs, Comparator.comparing(s -> s.getLocalTime())).getLocalTime();
         endTime = Collections.max(logs, Comparator.comparing(s -> s.getLocalTime())).getLocalTime();
@@ -90,28 +93,28 @@ public class LogsReport {
         return logs;
     }
 
-    public List<com.turan.streams.demo.ReportData> calculateLogs(List<com.turan.streams.demo.LogData> logs){
+    public List<ReportData> calculateLogs(List<LogData> logs){
 
-        List<com.turan.streams.demo.ReportData> reportDataList = new ArrayList<com.turan.streams.demo.ReportData>();
+        List<ReportData> reportDataList = new ArrayList<ReportData>();
 
         // group the log records in a map by user
-        Map<String, List<com.turan.streams.demo.LogData>> logsGrouped = logs.stream()
+        Map<String, List<LogData>> logsGrouped = logs.stream()
                                                         .collect(Collectors.groupingBy(l -> l.getUser()));
 
         // iterate the log values in the map for each user
         logsGrouped.forEach((user,logList)->{
             // System.out.println("User : " + user + " Logdata list size : " + logList.size());
-            com.turan.streams.demo.ReportData reportData = new com.turan.streams.demo.ReportData(user,0,0);
+            ReportData reportData = new ReportData(user,0,0);
 
             // calculate the duration between start - end pairs by handling the cases where a record does not have a matching start or end
             logList.forEach(item->{
                 Duration duration  = null;
-                if("End".equals(((com.turan.streams.demo.LogData)item).getAction())){
+                if("End".equals(((LogData)item).getAction())){
                     LocalTime previousLogDataLocalTime = getPreviousLogDataLocalTime(logList, logList.indexOf(item));
                     duration = Duration.between(previousLogDataLocalTime, item.getLocalTime());
                 }
                 // if the last log record is a start
-                else if(logList.indexOf(item) == logList.size() -1 && "Start".equals(((com.turan.streams.demo.LogData)item).getAction())){
+                else if(logList.indexOf(item) == logList.size() -1 && "Start".equals(((LogData)item).getAction())){
                     duration = Duration.between(item.getLocalTime(), endTime);
                 }
 
@@ -125,16 +128,16 @@ public class LogsReport {
             // System.out.println(reportData.toString());
             reportDataList.add(reportData);
         });
-        reportDataList.sort(Comparator.comparing(com.turan.streams.demo.ReportData::getUser));
+        reportDataList.sort(Comparator.comparing(ReportData::getUser));
         //reportDataList.forEach(x ->  System.out.println(x));
         return reportDataList;
     }
 
     // Gets the matching start record for an end record and returns the time value of that start record
-    public LocalTime getPreviousLogDataLocalTime(List<com.turan.streams.demo.LogData> v, int indexOf) {
+    public LocalTime getPreviousLogDataLocalTime(List<LogData> v, int indexOf) {
         LocalTime previousLogLocalTime = startTime;
         for(int i = indexOf-1; i>=0; i--){
-            com.turan.streams.demo.LogData logData = v.get(i);
+            LogData logData = v.get(i);
             if("Start".equals(logData.getAction()) && !logData.isMatched()) {
                 logData.setMatched(true);
                 previousLogLocalTime = logData.getLocalTime();
