@@ -81,9 +81,6 @@ public class LogsReport {
 
         startTime = logs.get(0).getLocalTime();
         endTime = logs.get(logs.size()-1).getLocalTime();
-        //logs.sort(Comparator.comparing(LogData::getUser).thenComparing(LogData::getLocalTime));
-        //startTime = Collections.min(logs, Comparator.comparing(s -> s.getLocalTime())).getLocalTime();
-        //endTime = Collections.max(logs, Comparator.comparing(s -> s.getLocalTime())).getLocalTime();
         return logs;
     }
 
