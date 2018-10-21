@@ -31,7 +31,7 @@ public class LogsReport {
             }
         }
         else  {
-            System.out.println("Enter the input file name: ");
+            //System.out.println("Enter the input file name: ");
             //Scanner scanner = new Scanner(System.in);
             //inputFileName = scanner.nextLine();
             inputFileName = "Resources/logs.log";
