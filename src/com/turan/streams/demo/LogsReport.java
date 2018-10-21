@@ -28,17 +28,9 @@ public class LogsReport {
         // read the file name from the first parameter
         if(args.length > 0) {
             inputFileName = args[0];
-            //System.out.println("Your filename is " + inputFileName);
-            if(args.length == 2){
-                outputFileName =  args[1];
-            }
         }
         else  {
-            //System.out.println("Enter the input file name: ");
-            //Scanner scanner = new Scanner(System.in);
-            //inputFileName = scanner.nextLine();
             inputFileName = "Resources/logs.log";
-            //System.out.println("Your filename is " + inputFileName);
         }
 
         File f = new File(inputFileName);
@@ -57,8 +49,8 @@ public class LogsReport {
 
     }
 
+    // Reads the log file and generates the output
     public void executeReport() throws IOException {
-
         // Read the lines of the input file into a stream
         Stream<String> lines = Files.lines(Paths.get(inputFileName));
 
@@ -74,38 +66,37 @@ public class LogsReport {
                         .forEach(row-> writeToFile(fw, String.valueOf(row)));
         fw.close();
 
+        reportDataList.stream()
+                .forEach(System.out::println);
+
         lines.close();
     }
 
+    // Parses the log file, filters the corrupted data and returns a list object of valid logs
     public List<LogData> parse(Stream<String> lines) throws IOException {
         List<LogData> logs = lines.map(line -> line.split(" "))
                                     .filter(LogData::isLineValid)
                                     .map(a -> new LogData(LocalTime.parse(a[0]), a[1], a[2]))
                                     .collect(Collectors.toList());
 
-        //logs.forEach(x ->  System.out.println(x));
-        //System.out.println("-----------------------");
-        logs.sort(Comparator.comparing(LogData::getUser).thenComparing(LogData::getLocalTime));
-        //logs.forEach(x ->  System.out.println(x));
-        startTime = Collections.min(logs, Comparator.comparing(s -> s.getLocalTime())).getLocalTime();
-        endTime = Collections.max(logs, Comparator.comparing(s -> s.getLocalTime())).getLocalTime();
-        //System.out.println("start time : " + startTime + " endTime : " + endTime);
+        startTime = logs.get(0).getLocalTime();
+        endTime = logs.get(logs.size()-1).getLocalTime();
+        //logs.sort(Comparator.comparing(LogData::getUser).thenComparing(LogData::getLocalTime));
+        //startTime = Collections.min(logs, Comparator.comparing(s -> s.getLocalTime())).getLocalTime();
+        //endTime = Collections.max(logs, Comparator.comparing(s -> s.getLocalTime())).getLocalTime();
         return logs;
     }
 
+    // Calculates the session count and total seconds per user and returns the values in a list
     public List<ReportData> calculateLogs(List<LogData> logs){
 
         List<ReportData> reportDataList = new ArrayList<ReportData>();
-
         // group the log records in a map by user
         Map<String, List<LogData>> logsGrouped = logs.stream()
                                                         .collect(Collectors.groupingBy(l -> l.getUser()));
-
         // iterate the log values in the map for each user
         logsGrouped.forEach((user,logList)->{
-            // System.out.println("User : " + user + " Logdata list size : " + logList.size());
             ReportData reportData = new ReportData(user,0,0);
-
             // calculate the duration between start - end pairs by handling the cases where a record does not have a matching start or end
             logList.forEach(item->{
                 Duration duration  = null;
@@ -113,7 +104,6 @@ public class LogsReport {
                     LocalTime previousLogDataLocalTime = getPreviousLogDataLocalTime(logList, logList.indexOf(item));
                     duration = Duration.between(previousLogDataLocalTime, item.getLocalTime());
                 }
-                // if the last log record is a start
                 else if(logList.indexOf(item) == logList.size() -1 && "Start".equals(((LogData)item).getAction())){
                     duration = Duration.between(item.getLocalTime(), endTime);
                 }
@@ -124,12 +114,10 @@ public class LogsReport {
                 }
             });
 
-            // create the use report object which will be displayed as a row in the output file
-            // System.out.println(reportData.toString());
+            // create the user report object which will be displayed as a row in the output file
             reportDataList.add(reportData);
         });
         reportDataList.sort(Comparator.comparing(ReportData::getUser));
-        //reportDataList.forEach(x ->  System.out.println(x));
         return reportDataList;
     }
 
@@ -195,7 +183,4 @@ public class LogsReport {
     public void setEndTime(LocalTime endTime) {
         this.endTime = endTime;
     }
-/*
-$ java MyProg -f file.txt
-*/
 }

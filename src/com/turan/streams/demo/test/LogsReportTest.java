@@ -53,10 +53,10 @@ public class LogsReportTest {
         List<LogData> expectedLogDataList = new ArrayList<LogData>();
         expectedLogDataList.add(new LogData(LocalTime.parse("14:02:59"), "ALICE99","End"));
         expectedLogDataList.add(new LogData(LocalTime.parse("14:03:00"), "ALICE99","Start"));
-        expectedLogDataList.add(new LogData(LocalTime.parse("14:03:33"), "ALICE99","End"));
-        expectedLogDataList.add(new LogData(LocalTime.parse("14:03:03"), "BECKY","Start"));
         expectedLogDataList.add(new LogData(LocalTime.parse("14:03:02"), "CHARLIE","End"));
+        expectedLogDataList.add(new LogData(LocalTime.parse("14:03:03"), "BECKY","Start"));
         expectedLogDataList.add(new LogData(LocalTime.parse("14:03:04"), "CHARLIE","Start"));
+        expectedLogDataList.add(new LogData(LocalTime.parse("14:03:33"), "ALICE99","End"));
 
         List<LogData> actualLogDataList =  logsReport.parse(Files.lines(Paths.get(TEST_LOGS_NAME)));
         int i =0;
