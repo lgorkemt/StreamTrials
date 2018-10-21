@@ -2,7 +2,13 @@
  Recources folder which is under the root. An example of input log file is already existing under this folder including some
  corrupt data. The output is aslo printed out to tge console.
 
-. To compile and run the application, go to the root folder and run the following command;
+. To compile and run the application, go to the root folder and run the following commands;
+
+to compile;
+
+javac -d bin -sourcepath src/  src/com/turan/streams/demo/*.java
+
+to run with a logs file;
 
 java -cp bin com.turan.streams.demo.MainAccessLogsReport Resources/logs.log
 
