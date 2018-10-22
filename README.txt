@@ -1,4 +1,4 @@
-. The application reads a input file whose name is passed while calling the main program, and produces an output named
+. The application reads an input file whose name is passed while calling the main program, and produces an output named
 reports.txt under Recources folder which is under the root. An example of input log file mamed logs.log is already
 existing under this folder including some corrupt data. The output is printed out to the console as well.
 
