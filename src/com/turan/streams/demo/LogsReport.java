@@ -138,13 +138,18 @@ public class LogsReport {
         try {
             fw.write(String.format("%s%n", row));
         } catch (IOException e) {
-            System.out.println("File writing caused exception : " + e.getMessage());
+            System.out.println("Exception in writing to a file : " + e.getMessage());
         }
     }
 
-    private void createEmptyFile(String fileName) throws IOException {
-        deleteFile(fileName);
-        Files.write(Paths.get(fileName), new byte[0], StandardOpenOption.CREATE);
+    private void createEmptyFile(String fileName){
+        try {
+            deleteFile(fileName);
+            Files.write(Paths.get(fileName), new byte[0], StandardOpenOption.CREATE);
+        }
+        catch (IOException e){
+            System.out.println("Exception in creating file " + e.getMessage());
+        }
     }
 
     private void deleteFile(String fileName) throws IOException {
