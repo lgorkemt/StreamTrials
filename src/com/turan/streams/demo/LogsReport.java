@@ -187,4 +187,5 @@ public class LogsReport {
     public void setEndTime(LocalTime endTime) {
         this.endTime = endTime;
     }
+
 }
