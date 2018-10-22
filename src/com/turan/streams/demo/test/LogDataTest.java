@@ -12,6 +12,7 @@ public class LogDataTest {
     {
         assertFalse("wrong name format", LogData.isLineValid("14:02:03 GEORGE HAGI Start".split( " ")));
         assertFalse("wrong time format", LogData.isLineValid("14.02.03 GEORGEHAGI Start".split( " ")));
+        assertFalse("not alpha-numeric name format", LogData.isLineValid("14.02.03 GEORGEHAGI! Start".split( " ")));
         assertFalse("wrong Start/End value",LogData.isLineValid("14:02:03 GEORGEHAGI Starts".split( " ")));
         assertFalse("missing one parameter", LogData.isLineValid(("14:02:03 GEORGEHAGI").split( " ")));
         assertFalse("missing two parameters", LogData.isLineValid("14:02:03".split( " ")));
