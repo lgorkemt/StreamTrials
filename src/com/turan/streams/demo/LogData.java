@@ -31,6 +31,7 @@ public class LogData{
         } catch (DateTimeParseException e) {
             return false;
         }
+
         if(!strings[1].matches("^[a-zA-Z0-9]*$")){
             return false;
         }
