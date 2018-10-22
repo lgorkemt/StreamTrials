@@ -28,10 +28,16 @@ public class LogsReportTest {
 
     @Before
     public void setUp() throws Exception {
-
         logsReport = new LogsReport();
+        logsReport.setInputFileName(TEST_LOGS_NAME);
+        logsReport.setOutputFileName(TEST_REPORT_NAME);
+        createEmptyFile(TEST_LOGS_NAME);
+        createEmptyFile(TEST_REPORT_NAME);
+    }
 
-        // generate an input file
+    // unit test of LogsReport->parse method
+    @Test
+    public void test_parse_method() throws IOException {
         String[] lines = {
                 "14:02:59 ALICE99 End",
                 "14:03:00 ALICE99 Start",
@@ -40,15 +46,6 @@ public class LogsReportTest {
                 "14:03:04 CHARLIE Start",
                 "14:03:33 ALICE99 End"
         };
-        createEmptyFile(TEST_LOGS_NAME);
-        writeToFile(TEST_LOGS_NAME, lines);
-    }
-
-    // unit test of parse method
-    @Test
-    public void test_parse_method() throws IOException {
-
-        Stream<String> lines = Files.lines(Paths.get(TEST_LOGS_NAME));
 
         List<LogData> expectedLogDataList = new ArrayList<LogData>();
         expectedLogDataList.add(new LogData(LocalTime.parse("14:02:59"), "ALICE99","End"));
@@ -58,6 +55,7 @@ public class LogsReportTest {
         expectedLogDataList.add(new LogData(LocalTime.parse("14:03:04"), "CHARLIE","Start"));
         expectedLogDataList.add(new LogData(LocalTime.parse("14:03:33"), "ALICE99","End"));
 
+        writeToFile(TEST_LOGS_NAME, lines);
         List<LogData> actualLogDataList =  logsReport.parse(Files.lines(Paths.get(TEST_LOGS_NAME)));
         int i =0;
 
@@ -69,13 +67,24 @@ public class LogsReportTest {
         assertEquals(6, actualLogDataList.size());
     }
 
-    // unit test of calculateLogs method
+    // unit test of LogsReport->calculateLogs method
     @Test
     public void test_calculate_logs_method() throws IOException {
+        String[] lines = {
+                "14:02:59 ALICE99 End",
+                "14:03:00 ALICE99 Start",
+                "14:03:02 CHARLIE End",
+                "14:03:03 BECKY Start",
+                "14:03:04 CHARLIE Start",
+                "14:03:33 ALICE99 End"
+        };
+
         List<ReportData> expectedReportList = new ArrayList<ReportData>();
         expectedReportList.add(new ReportData("ALICE99", 2, 33));
         expectedReportList.add(new ReportData("BECKY", 1, 30));
         expectedReportList.add(new ReportData("CHARLIE", 2, 32));
+
+        writeToFile(TEST_LOGS_NAME, lines);
 
         List<LogData> actualLogDataList =  logsReport.parse(Files.lines(Paths.get(TEST_LOGS_NAME)));
         List<ReportData> actualReportList = logsReport.calculateLogs(actualLogDataList);
@@ -89,22 +98,115 @@ public class LogsReportTest {
 
     // testing execute method (the whole process)
     @Test
-    public void test_execute_method() throws IOException {
+    public void test_execute_method_random_file() throws IOException {
+        // generate an input file
+        String[] lines = {
+                "14:02:59 ALICE99 End",
+                "14:03:00 ALICE99 Start",
+                "14:03:19 ALICE99 End",
+                "14:03:02 CHARLIE End",
+                "14:03:03 BECKY Start",
+                "14:03:13 BECKY Start",
+                "14:03:04 CHARLIE Start",
+                "14:03:33 ALICE99 Start"
+        };
+        System.out.println("test_execute_method_random_file output :" );
+        setUpFiles(lines);
 
         List<String> expectedReportOutput = new ArrayList<String>();
-        expectedReportOutput.add("ALICE99 2 33");
-        expectedReportOutput.add("BECKY 1 30");
+        expectedReportOutput.add("ALICE99 3 19");
+        expectedReportOutput.add("BECKY 2 50");
         expectedReportOutput.add("CHARLIE 2 32");
 
-        createEmptyFile(TEST_REPORT_NAME);
-
-        logsReport.setInputFileName(TEST_LOGS_NAME);
-        logsReport.setOutputFileName(TEST_REPORT_NAME);
-        logsReport.executeReport();
-
-        Stream<String> lines = Files.lines(Paths.get(TEST_REPORT_NAME));
+        Stream<String> streamLines = Files.lines(Paths.get(TEST_REPORT_NAME));
         int[] iarr = {0};
-        lines.forEach(s->{
+        streamLines.forEach(s->{
+            assertEquals(expectedReportOutput.get(iarr[0]++), s);
+        });
+    }
+
+    // testing execute method (the whole process)
+    @Test
+    public void test_execute_method_standart_file() throws IOException {
+        // generate an input file
+        String[] lines = {
+                "14:02:03 ALICE99 Start",
+                "14:02:05 CHARLIE End",
+                "14:02:34 ALICE99 End",
+                "14:02:58 ALICE99 Start",
+                "14:03:02 CHARLIE Start",
+                "14:03:33 ALICE99 Start",
+                "14:03:35 ALICE99 End",
+                "14:03:37 CHARLIE End",
+                "14:04:05 ALICE99 End",
+                "14:04:23 ALICE99 End",
+                "14:04:41 CHARLIE Start"
+        };
+        System.out.println("test_execute_method_standart_file output :" );
+        setUpFiles(lines);
+
+        List<String> expectedReportOutput = new ArrayList<String>();
+        expectedReportOutput.add("ALICE99 4 240");
+        expectedReportOutput.add("CHARLIE 3 37");
+
+        Stream<String> streamLines = Files.lines(Paths.get(TEST_REPORT_NAME));
+        int[] iarr = {0};
+        streamLines.forEach(s->{
+            assertEquals(expectedReportOutput.get(iarr[0]++), s);
+        });
+    }
+
+    // testing execute method (the whole process)
+    @Test
+    public void test_execute_method_with_only_start_records() throws IOException {
+        // generate an input file
+        String[] lines = {
+                "14:03:00 ALICE99 Start",
+                "14:03:05 ALICE99 Start",
+                "14:03:10 CHARLIE Start",
+                "14:03:18 BECKY Start",
+                "14:03:29 CHARLIE Start",
+                "14:04:00 ALICE99 Start"
+        };
+        System.out.println("test_execute_method_with_only_start_records output :" );
+        setUpFiles(lines);
+
+        List<String> expectedReportOutput = new ArrayList<String>();
+        expectedReportOutput.add("ALICE99 3 115");
+        expectedReportOutput.add("BECKY 1 42");
+        expectedReportOutput.add("CHARLIE 2 81");
+
+        Stream<String> streamLines = Files.lines(Paths.get(TEST_REPORT_NAME));
+
+        int[] iarr = {0};
+        streamLines.forEach(s->{
+            assertEquals(expectedReportOutput.get(iarr[0]++), s);
+        });
+    }
+
+    // testing execute method (the whole process)
+    @Test
+    public void test_execute_method_with_only_end_records() throws IOException {
+        // generate an input file
+        String[] lines = {
+                "14:03:00 ALICE99 End",
+                "14:03:05 ALICE99 End",
+                "14:03:10 CHARLIE End",
+                "14:03:18 BECKY End",
+                "14:03:29 CHARLIE End",
+                "14:04:00 ALICE99 End"
+        };
+        System.out.println("test_execute_method_with_only_end_records output :" );
+        setUpFiles(lines);
+
+        List<String> expectedReportOutput = new ArrayList<String>();
+        expectedReportOutput.add("ALICE99 3 65");
+        expectedReportOutput.add("BECKY 1 18");
+        expectedReportOutput.add("CHARLIE 2 39");
+
+        Stream<String> streamLines = Files.lines(Paths.get(TEST_REPORT_NAME));
+        int[] iarr = {0};
+        streamLines.forEach(s->{
             assertEquals(expectedReportOutput.get(iarr[0]++), s);
         });
     }
@@ -126,6 +228,10 @@ public class LogsReportTest {
         LogsReport logsReport = new LogsReport(args);
     }
 
+    private void setUpFiles(String[] lines) throws IOException {
+        writeToFile(TEST_LOGS_NAME, lines);
+        logsReport.executeReport();
+    }
 
     private void writeToFile(String fileName, String[] lines) throws IOException {
         Files.write(Paths.get(fileName), Arrays.asList(lines), Charset.defaultCharset(), StandardOpenOption.CREATE);

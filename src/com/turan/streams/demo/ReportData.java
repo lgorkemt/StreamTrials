@@ -50,4 +50,5 @@ public class ReportData {
         this.totalSeconds +=  duration.getSeconds();
         this.numberOfSessions += 1;
     }
+
 }

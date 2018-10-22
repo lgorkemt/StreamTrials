@@ -2,6 +2,7 @@ package com.turan.streams.demo.test;
 
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
+import org.junit.runner.notification.Failure;
 
 public class TestRunner {
     public static void main(String[] args) {
@@ -12,7 +13,10 @@ public class TestRunner {
             return;
         }
         else {
-            System.out.println("ERROR :  " + result.getRunCount()+" tests failedß!");
+            System.out.println("ERROR :  " + result.getFailures().size() + " tests failed!");
+            for(Failure failure : result.getFailures()) {
+                System.out.println("ERROR : " +  failure.getTestHeader() + " failed !");
+            }
         }
 
         result.getFailures()

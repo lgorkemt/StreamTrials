@@ -24,7 +24,6 @@ public class LogsReport {
     private String outputFileName = "Resources/report.txt";
 
     public LogsReport(String[] args) throws FileNotFoundException, IOException {
-
         // read the file name from the first parameter
         if(args.length > 0) {
             inputFileName = args[0];
@@ -60,14 +59,14 @@ public class LogsReport {
         // Genarete the output data from the logs and store into a List
         List<ReportData> reportDataList = calculateLogs(logs);
 
-        // Write the output data into a report
-        FileWriter fw = new FileWriter(outputFileName);
-        reportDataList.stream()
-                        .forEach(row-> writeToFile(fw, String.valueOf(row)));
-        fw.close();
-
+        // Write the output data into a report and to the console
         reportDataList.stream()
                 .forEach(System.out::println);
+
+        FileWriter fw = new FileWriter(outputFileName);
+        reportDataList.stream()
+                .forEach(row -> writeToFile(fw, String.valueOf(row)));
+        fw.close();
 
         lines.close();
     }
@@ -86,7 +85,6 @@ public class LogsReport {
 
     // Calculates the session count and total seconds per user and returns the values in a list
     public List<ReportData> calculateLogs(List<LogData> logs){
-
         List<ReportData> reportDataList = new ArrayList<ReportData>();
         // group the log records in a map by user
         Map<String, List<LogData>> logsGrouped = logs.stream()
@@ -96,21 +94,11 @@ public class LogsReport {
             ReportData reportData = new ReportData(user,0,0);
             // calculate the duration between start - end pairs by handling the cases where a record does not have a matching start or end
             logList.forEach(item->{
-                Duration duration  = null;
-                if("End".equals(((LogData)item).getAction())){
-                    LocalTime previousLogDataLocalTime = getPreviousLogDataLocalTime(logList, logList.indexOf(item));
-                    duration = Duration.between(previousLogDataLocalTime, item.getLocalTime());
-                }
-                else if(logList.indexOf(item) == logList.size() -1 && "Start".equals(((LogData)item).getAction())){
-                    duration = Duration.between(item.getLocalTime(), endTime);
-                }
-
+                Duration duration  = getMatchingLogDataLocalTime(item, logList);;
                 if(duration!=null) {
                     reportData.incrementSessionAndTotalSeconds(duration);
-                    item.setMatched(true);
                 }
             });
-
             // create the user report object which will be displayed as a row in the output file
             reportDataList.add(reportData);
         });
@@ -118,25 +106,39 @@ public class LogsReport {
         return reportDataList;
     }
 
-    // Gets the matching start record for an end record and returns the time value of that start record
-    public LocalTime getPreviousLogDataLocalTime(List<LogData> v, int indexOf) {
-        LocalTime previousLogLocalTime = startTime;
-        for(int i = indexOf-1; i>=0; i--){
-            LogData logData = v.get(i);
-            if("Start".equals(logData.getAction()) && !logData.isMatched()) {
-                logData.setMatched(true);
-                previousLogLocalTime = logData.getLocalTime();
-                break;
+    // Gets the matching record and returns the duration value of the session
+    public Duration getMatchingLogDataLocalTime(LogData logData, List<LogData> logDataList) {
+        Duration duration = null;
+        int indexOf = logDataList.indexOf(logData);
+
+        if(!logData.isMatched()){
+            if("End".equals(logData.getAction())){
+                duration =  Duration.between(startTime, logData.getLocalTime());
+            }
+            else {
+                for(int i =indexOf+1; i<logDataList.size();i++){
+                    LogData nextLog = logDataList.get(i);
+                    if(!nextLog.isMatched() && "End".equals(nextLog.getAction())) {
+                        nextLog.setMatched(true);
+                        logData.setMatched(true);
+                        duration = Duration.between(logData.getLocalTime(), nextLog.getLocalTime());
+                        break;
+                    }
+                }
+                if(!logData.isMatched()) {
+                    duration = Duration.between(logData.getLocalTime(), endTime);
+                    logData.setMatched(true);
+                }
             }
         }
-        return previousLogLocalTime;
+        return duration;
     }
 
     private void writeToFile(FileWriter fw, String row) {
         try {
             fw.write(String.format("%s%n", row));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.out.println("File writing caused exception : " + e.getMessage());
         }
     }
 
